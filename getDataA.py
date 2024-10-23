@@ -17,6 +17,7 @@ from pwordProtect import Protection
 
 # Initialize undetected ChromeDriver
 driver = uc.Chrome(version_main=128)
+#driver = uc.Chrome()
 
 # Open the Suno website
 driver.get("https://suno.com/")
@@ -56,15 +57,17 @@ time.sleep(random.uniform(10,13))
 driver.get('http://suno.com/create')
 
 # CHANGE QUERY HERE 
-QUERY = 'british rap song about having to navigate the 21st century as an old school person'
+QUERIES = ['british rap song about having to navigate the 21st century as an old school person', 'pop song about being a woman in STEM']
 
 query_field = driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]/div[2]/div/div/textarea')
-query_field.send_keys(QUERY)
-
 create_btn = driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]/div[3]/button')
-create_btn.click()
 
-time.sleep(random.uniform(18,28)) # May need to adjust
+for QUERY in QUERIES:
+    query_field.clear()
+    query_field.send_keys(QUERY)
+    create_btn.click()
+
+    time.sleep(random.uniform(18,28)) # May need to adjust - ideally should detect when the song is done being generated: possible ways we could test this is by counting elements with class "chakra-spinner" or counting number of song elements using url extraction as in the downloading section
 
 # %%
 # Downloading created song from library
@@ -94,7 +97,7 @@ for el in song_elements:
 
 song_hrefs = [element.get_attribute('href') for element in song_elements]
 
-NUM_SONGS = 2
+NUM_SONGS = 2 * len(QUERIES)
 
 for i in range(NUM_SONGS):
     driver.get(song_hrefs[i])

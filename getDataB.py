@@ -193,6 +193,7 @@ def bulk_create_and_download(QUERY_LIST):
         create(query)
         download()
         clear()
+        counter+=1
 
 
 def main():

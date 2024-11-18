@@ -90,7 +90,7 @@ def login():
     time.sleep(random.uniform(10,13))
     stop_loading(spinner_thread, "LOGIN FINISHED")
 
-def create():
+def create(q=None):
     # CREATE SONG 
     driver.get("https://sync.beatoven.ai/workspace")
     time.sleep(random.uniform(1,3))
@@ -99,7 +99,13 @@ def create():
 
     # Clear any existing text (if needed) and send the prompt
     textarea.clear()  # This step is optional if you want to clear the textarea first
-    QUERY = input("What kind of song do you want? Include duration, vibe, era, etc: ")
+    if q==None:
+        # SINGLE CASE
+        QUERY = input("What kind of song do you want? Include duration, vibe, era, etc: ")
+    else:
+        # BULK CASE
+        QUERY = q
+
     textarea.send_keys(QUERY)
 
     time.sleep(random.uniform(3,6))
@@ -180,6 +186,14 @@ def clear():
 
     stop_loading(spinner_thread, "WORKSPACE CLEARED")
 
+def bulk_create_and_download(QUERY_LIST):
+    counter = 1
+    for query in QUERY_LIST:
+        print(f"STARTING DOWNLOAD NUMBER: {counter}")
+        create(query)
+        download()
+        clear()
+
 
 def main():
     if input("Ready to log in? (y/n): ") == "y":
@@ -191,6 +205,21 @@ def main():
         create()
         download()
         clear()
+    
+    # Will start with 3 songs in the batch
+    batch = [
+        "Compose a 30-second track for a bachelor party. The music should complement the lively and celebratory atmosphere of the event.",
+        "Compose a 30-second track for a bachelorette party. The music should enhance the joyful and fun occasion.",
+        "Compose a 30-second track for a yoga session. The music should align with the calming and focused nature of the activity.",
+        "Compose a 30-second track for a weightlifting session. The music should match the intense and dynamic energy of the workout."
+        ]  
+    
+    if input("Do you want a batch query? (y/n): ") == "y":
+        print("Okay, here is your batch list: ")
+        print(batch)
+        bulk_create_and_download(batch)
+        time.sleep(3)
+    
     
     print("ENDING SESSION")
     driver.close()

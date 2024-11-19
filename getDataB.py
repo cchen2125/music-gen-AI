@@ -9,11 +9,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import random
 import undetected_chromedriver as uc
-import chromedriver_binary
+#import chromedriver_binary
 import requests
-import re
-from pydub import AudioSegment
-from io import BytesIO
+#import re
+#from pydub import AudioSegment
+#from io import BytesIO
 import convertFile
 
 import sys
@@ -59,7 +59,8 @@ options = uc.ChromeOptions()
 #options.add_argument("--headless=new")  # Headless mode
 
 # Initialize undetected
-driver = uc.Chrome(options=options)
+version = 130
+driver = uc.Chrome(version_main=version, options=options)
 
 def login():
     spinner_thread = start_loading("LOGIN")
@@ -122,37 +123,39 @@ def create(q=None):
 
     # TAKES A LITTLE WHILE TO BE CREATED
 
-def download():
+def download(query_key, account):
     spinner_thread = start_loading("DOWNLOAD")
-    
+
     # Step 1: Locate the button with the descriptive file name
     file_name_button = driver.find_element(By.CLASS_NAME, 'btn-rename')
-    file_name = file_name_button.text.strip()  # Extract and clean up the file name text
+    song_name = file_name_button.text.strip()  # Extract and clean up the file name text
 
-    # Step 2: Locate the audio element and extract the src URL
-    audio_element = driver.find_element(By.TAG_NAME, 'audio')
-    audio_url = audio_element.get_attribute('src')
+    # Step 2: Locate the audio elements and extract the src URL
+    audio_elements = driver.find_elements(By.TAG_NAME, 'audio')
 
-    # Step 3: Download the audio file using the requests library
-    response = requests.get(audio_url)
-    if response.status_code != 200:
-        stop_loading(spinner_thread, "DOWNLOAD")
-        print(f"Failed to download audio file: Status code {response.status_code}")
-        return
+    for i, audio_element in enumerate(audio_elements):
+        audio_url = audio_element.get_attribute('src')
 
-    # Optional: Save the downloaded AAC file locally for debugging
-    aac_file_name = f"{file_name.replace(' ', '_')}.aac"
-    with open(aac_file_name, "wb") as f:
-        f.write(response.content)
+        # Step 3: Download the audio file using the requests library
+        response = requests.get(audio_url)
+        if response.status_code != 200:
+            stop_loading(spinner_thread, "DOWNLOAD")
+            print(f"Failed to download audio file: Status code {response.status_code}")
+            return
 
-    # Step 4: Convert the AAC file (downloaded in memory) to MP3
-    try:
-        convertFile.convert_aac_to_mp3(aac_file_name)
-        print(f"Audio file '{aac_file_name}' downloaded and converted to MP3 successfully.")
-    except Exception as e:
-        print(f"Error during AAC to MP3 conversion: {e}")
-    finally:
-        stop_loading(spinner_thread, "DOWNLOAD FINISHED")
+        # Save the downloaded AAC file locally for debugging
+        aac_file_name = f"{query_key.replace(' ', '-')}_{song_name.replace(' ', '-')}_v{i+1}_{account}.aac"
+        with open(aac_file_name, "wb") as f:
+            f.write(response.content)
+
+        # Step 4: Convert the AAC file (downloaded in memory) to MP3
+        try:
+            convertFile.convert_aac_to_mp3(aac_file_name)
+            print(f"Audio file '{aac_file_name}' downloaded and converted to MP3 successfully.")
+        except Exception as e:
+            print(f"Error during AAC to MP3 conversion: {e}")
+    
+    stop_loading(spinner_thread, "DOWNLOAD FINISHED")
 
 def clear():
     spinner_thread = start_loading("CLEARING WORKSPACE (for unlimited creations)")
@@ -188,10 +191,10 @@ def clear():
 
 def bulk_create_and_download(QUERY_LIST):
     counter = 1
-    for query in QUERY_LIST:
+    for query_key in QUERY_LIST:
         print(f"STARTING DOWNLOAD NUMBER: {counter}")
-        create(query)
-        download()
+        create(QUERY_LIST[query_key])
+        download(query_key, Protection.name.split('@')[0])
         clear()
         counter+=1
 
@@ -201,19 +204,14 @@ def main():
         login()
     else:
         driver.close()
-
-    while input("Do you want another song? (y/n): ") != "n":
-        create()
-        download()
-        clear()
     
     # Will start with 3 songs in the batch
-    batch = [
-        "Compose a 30-second track for a bachelor party. The music should complement the lively and celebratory atmosphere of the event.",
-        "Compose a 30-second track for a bachelorette party. The music should enhance the joyful and fun occasion.",
-        "Compose a 30-second track for a yoga session. The music should align with the calming and focused nature of the activity.",
-        "Compose a 30-second track for a weightlifting session. The music should match the intense and dynamic energy of the workout."
-        ]  
+    batch = {
+        'bachelor party': "Compose a 30-second track for a bachelor party. The music should complement the lively and celebratory atmosphere of the event.",
+        'bachelorette party': "Compose a 30-second track for a bachelorette party. The music should enhance the joyful and fun occasion.",
+        'yoga': "Compose a 30-second track for a yoga session. The music should align with the calming and focused nature of the activity.",
+        'weightlifting': "Compose a 30-second track for a weightlifting session. The music should match the intense and dynamic energy of the workout."
+        }
     
     if input("Do you want a batch query? (y/n): ") == "y":
         print("Okay, here is your batch list: ")
@@ -221,6 +219,12 @@ def main():
         bulk_create_and_download(batch)
         time.sleep(3)
     
+    counter = 0
+    while input("Do you want another song? (y/n): ") != "n":
+        counter += 1
+        create()
+        download(f'query{counter}', Protection.name.split('@')[0])
+        clear()
     
     print("ENDING SESSION")
     driver.close()

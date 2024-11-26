@@ -145,6 +145,10 @@ def download(query_key):
 
         # Step 2: Locate the audio elements and extract the src URL
         audio_elements = driver.find_elements(By.TAG_NAME, 'audio')
+        
+        while len(audio_elements) < 4:
+            time.sleep(random.uniform(5,10))
+            audio_elements = driver.find_elements(By.TAG_NAME, 'audio')
 
         for i, audio_element in enumerate(audio_elements):
             audio_url = audio_element.get_attribute('src')

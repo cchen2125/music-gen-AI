@@ -55,67 +55,77 @@ def stop_loading(spinner_thread, description):
 # This is not on the github
 from pwordProtect import Protection
 
-options = uc.ChromeOptions()
+#options = uc.ChromeOptions()
 #options.add_argument("--headless=new")  # Headless mode
 
 # Initialize undetected
+NUM_DRIVERS = len(Protection.names)
+active_drivers = []
+
 version = 130
-driver = uc.Chrome(version_main=version, options=options)
+
+#driver = uc.Chrome(version_main=version, options=options)
+
+for i in range(NUM_DRIVERS):
+    active_drivers.append(uc.Chrome(version_main=version))
 
 def login():
     spinner_thread = start_loading("LOGIN")
     # Open the Suno website
-    driver.get('https://sync.beatoven.ai/')
-    time.sleep(random.uniform(1, 5))
+    for i, driver in enumerate(active_drivers):
+        driver.get('https://sync.beatoven.ai/')
+        time.sleep(random.uniform(1, 5))
 
-    # Simulate a random mouse movement
-    actions = webdriver.ActionChains(driver)
-    actions.move_by_offset(random.randint(10, 50), random.randint(10, 50)).perform()
+        # Simulate a random mouse movement
+        actions = webdriver.ActionChains(driver)
+        actions.move_by_offset(random.randint(10, 50), random.randint(10, 50)).perform()
 
-    # Get taken to login screen
-    # Locate the 'Sign in with Google' button by the form action or button class
-    google_signin_button = driver.find_element(By.XPATH, '//button[span[text()="Sign in with Google"]]')
-    google_signin_button.click()
-    time.sleep(random.uniform(3, 7))
+        # Get taken to login screen
+        # Locate the 'Sign in with Google' button by the form action or button class
+        google_signin_button = driver.find_element(By.XPATH, '//button[span[text()="Sign in with Google"]]')
+        google_signin_button.click()
+        time.sleep(random.uniform(1, 5))
 
-    # Name and pword [stored in Protected module for privacy]
-    EMAIL = Protection.name
-    PASSWORD = Protection.password
+        # Name and pword [stored in Protected module for privacy]
+        email = Protection.names[i]
+        password = Protection.passwords[i]
 
-    # Add email and password
-    driver.find_element(By.XPATH, '//*[@id="identifierId"]').send_keys(EMAIL)
-    driver.find_element(By.XPATH, '//*[@id="identifierNext"]/div/button/span').click()
-    time.sleep(random.uniform(3,6))
-    driver.find_element(By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input').send_keys(PASSWORD)
-    driver.find_element(By.XPATH, '//*[@id="passwordNext"]/div/button/span').click()
+        # Add email and password
+        driver.find_element(By.XPATH, '//*[@id="identifierId"]').send_keys(email)
+        driver.find_element(By.XPATH, '//*[@id="identifierNext"]/div/button/span').click()
+        time.sleep(random.uniform(1,5))
+        driver.find_element(By.XPATH, '//*[@id="password"]/div[1]/div/div[1]/input').send_keys(password)
+        driver.find_element(By.XPATH, '//*[@id="passwordNext"]/div/button/span').click()
+        stop_loading(spinner_thread, f"LOGIN FINISHED FOR DRIVER {i+1}")
+    
     time.sleep(random.uniform(10,13))
-    stop_loading(spinner_thread, "LOGIN FINISHED")
 
 def create(q=None):
     # CREATE SONG 
-    driver.get("https://sync.beatoven.ai/workspace")
-    time.sleep(random.uniform(1,3))
-    # Locate the textarea element using its class or placeholder
-    textarea = driver.find_element(By.XPATH, '//textarea[@placeholder="Describe the music that you want. You can include duration, vibe, era and occasion."]')
+    for driver in active_drivers:
+        driver.get("https://sync.beatoven.ai/workspace")
+        time.sleep(random.uniform(1,3))
+        # Locate the textarea element using its class or placeholder
+        textarea = driver.find_element(By.XPATH, '//textarea[@placeholder="Describe the music that you want. You can include duration, vibe, era and occasion."]')
 
-    # Clear any existing text (if needed) and send the prompt
-    textarea.clear()  # This step is optional if you want to clear the textarea first
-    if q==None:
-        # SINGLE CASE
-        QUERY = input("What kind of song do you want? Include duration, vibe, era, etc: ")
-    else:
-        # BULK CASE
-        QUERY = q
+        # Clear any existing text (if needed) and send the prompt
+        textarea.clear()  # This step is optional if you want to clear the textarea first
+        if q==None:
+            # SINGLE CASE
+            QUERY = input("What kind of song do you want? Include duration, vibe, era, etc: ")
+        else:
+            # BULK CASE
+            QUERY = q
 
-    textarea.send_keys(QUERY)
+        textarea.send_keys(QUERY)
 
-    time.sleep(random.uniform(3,6))
+        time.sleep(random.uniform(3,6))
 
-    # Locate the button using its class or text (you can use either method)
-    compose_button = driver.find_element(By.XPATH, '//button[contains(text(), "Compose Music")]')
+        # Locate the button using its class or text (you can use either method)
+        compose_button = driver.find_element(By.XPATH, '//button[contains(text(), "Compose Music")]')
 
-    # Click the button to trigger the action
-    compose_button.click()
+        # Click the button to trigger the action
+        compose_button.click()
 
     spinner_thread = start_loading("CREATION (will take 60 seconds)")
     time.sleep(random.uniform(60,65))
@@ -123,78 +133,82 @@ def create(q=None):
 
     # TAKES A LITTLE WHILE TO BE CREATED
 
-def download(query_key, account):
+def download(query_key):
     spinner_thread = start_loading("DOWNLOAD")
 
-    # Step 1: Locate the button with the descriptive file name
-    file_name_button = driver.find_element(By.CLASS_NAME, 'btn-rename')
-    song_name = file_name_button.text.strip()  # Extract and clean up the file name text
+    for i, driver in enumerate(active_drivers):
+        account = Protection.names[i].split('@')[0]
 
-    # Step 2: Locate the audio elements and extract the src URL
-    audio_elements = driver.find_elements(By.TAG_NAME, 'audio')
+        # Step 1: Locate the button with the descriptive file name
+        file_name_button = driver.find_element(By.CLASS_NAME, 'btn-rename')
+        song_name = file_name_button.text.strip()  # Extract and clean up the file name text
 
-    for i, audio_element in enumerate(audio_elements):
-        audio_url = audio_element.get_attribute('src')
+        # Step 2: Locate the audio elements and extract the src URL
+        audio_elements = driver.find_elements(By.TAG_NAME, 'audio')
 
-        # Step 3: Download the audio file using the requests library
-        response = requests.get(audio_url)
-        if response.status_code != 200:
-            stop_loading(spinner_thread, "DOWNLOAD")
-            print(f"Failed to download audio file: Status code {response.status_code}")
-            return
+        for i, audio_element in enumerate(audio_elements):
+            audio_url = audio_element.get_attribute('src')
 
-        # Save the downloaded AAC file locally for debugging
-        aac_file_name = f"{query_key.replace(' ', '-')}_{song_name.replace(' ', '-')}_v{i+1}_{account}.aac"
-        with open(aac_file_name, "wb") as f:
-            f.write(response.content)
+            # Step 3: Download the audio file using the requests library
+            response = requests.get(audio_url)
+            if response.status_code != 200:
+                stop_loading(spinner_thread, "DOWNLOAD")
+                print(f"Failed to download audio file: Status code {response.status_code}")
+                return
 
-        # Step 4: Convert the AAC file (downloaded in memory) to MP3
-        try:
-            convertFile.convert_aac_to_mp3(aac_file_name)
-            print(f"Audio file '{aac_file_name}' downloaded and converted to MP3 successfully.")
-        except Exception as e:
-            print(f"Error during AAC to MP3 conversion: {e}")
+            # Save the downloaded AAC file locally for debugging
+            aac_file_name = f"{query_key.replace(' ', '-')}_{song_name.replace(' ', '-')}_v{i+1}_{account}.aac"
+            with open(aac_file_name, "wb") as f:
+                f.write(response.content)
+
+            # Step 4: Convert the AAC file (downloaded in memory) to MP3
+            try:
+                convertFile.convert_aac_to_mp3(aac_file_name)
+                print(f"Audio file '{aac_file_name}' downloaded and converted to MP3 successfully.")
+            except Exception as e:
+                print(f"Error during AAC to MP3 conversion: {e}")
     
     stop_loading(spinner_thread, "DOWNLOAD FINISHED")
 
 def clear():
     spinner_thread = start_loading("CLEARING WORKSPACE (for unlimited creations)")
-    driver.get("https://sync.beatoven.ai/workspace")
-    # Wait up to 10 seconds for the <p> element to be visible
-    element = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'My Projects')]"))
-    )
-    element.click()
+    for driver in active_drivers:
+        driver.get("https://sync.beatoven.ai/workspace")
+        # Wait up to 10 seconds for the <p> element to be visible
+        element = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'My Projects')]"))
+        )
+        element.click()
 
-    time.sleep(6)
-    # Locate all main buttons for created songs
-    song_buttons = driver.find_elements(By.CLASS_NAME, "btn-project-tile")
-    time.sleep(2)
+        time.sleep(6)
+        # Locate all main buttons for created songs
+        song_buttons = driver.find_elements(By.CLASS_NAME, "btn-project-tile")
+        time.sleep(2)
 
-    # Loop through each song button
-    for song_button in song_buttons:
-        # Locate the subbutton inside each song button and click it to open the dropdown
-        subbutton = song_button.find_element(By.CLASS_NAME, "bg-kebab")
-        subbutton.click()
-        
-        # Small delay to ensure the dropdown loads
-        time.sleep(1)
+        # Loop through each song button
+        for song_button in song_buttons:
+            # Locate the subbutton inside each song button and click it to open the dropdown
+            subbutton = song_button.find_element(By.CLASS_NAME, "bg-kebab")
+            subbutton.click()
+            
+            # Small delay to ensure the dropdown loads
+            time.sleep(1)
 
-        # Locate the "Delete" button in the dropdown and click it
-        delete_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Delete')]")
-        delete_button.click()
-        
-        # Small delay to handle any confirmation dialog, if present
-        time.sleep(1)
+            # Locate the "Delete" button in the dropdown and click it
+            delete_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Delete')]")
+            delete_button.click()
+            
+            # Small delay to handle any confirmation dialog, if present
+            time.sleep(1)
 
     stop_loading(spinner_thread, "WORKSPACE CLEARED")
 
 def bulk_create_and_download(QUERY_LIST):
     counter = 1
     for query_key in QUERY_LIST:
-        print(f"STARTING DOWNLOAD NUMBER: {counter}")
+        print(f"STARTING DOWNLOAD NUMBER: {counter} / {len(QUERY_LIST)}")
         create(QUERY_LIST[query_key])
-        download(query_key, Protection.name.split('@')[0])
+        download(query_key)
         clear()
         counter+=1
 
@@ -203,7 +217,8 @@ def main():
     if input("Ready to log in? (y/n): ") == "y":
         login()
     else:
-        driver.close()
+        for driver in active_drivers:
+            driver.close()
     
     # Will start with 3 songs in the batch
     batch = {
@@ -223,10 +238,12 @@ def main():
     while input("Do you want another song? (y/n): ") != "n":
         counter += 1
         create()
-        download(f'query{counter}', Protection.name.split('@')[0])
+        download(f'query{counter}')
         clear()
     
     print("ENDING SESSION")
-    driver.close()
+
+    for driver in active_drivers:
+        driver.close()
 
 main()

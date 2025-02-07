@@ -7,3 +7,5 @@
 - store Sterne emails/passwords in a .txt file called accounts.txt, where each line is a email, followed by a comma and then the password (no spaces)
 - For now, keep num_drivers<5 to avoid crashing. To use other accounts, just reorder your accounts.txt file
 - Be careful for some microsoft login errors (sometimes asks to login via code instead of password - must manually bypass)
+
+`stableAudioWorkflow.py`: Code for querying and downloading songs from Stable Audio

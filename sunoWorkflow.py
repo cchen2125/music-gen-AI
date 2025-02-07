@@ -3,10 +3,6 @@
 Login with Microsoft instead of Google to support manual creation
 of Microsoft account with Sterneworks domain
 
-Microsoft accounts created so far:
-- Robert
-- John
-
 """
 
 # Imports and setting up Webdriver
@@ -30,7 +26,7 @@ import time
 NUM_DRIVERS = 2 # need to make more microsoft accounts
 
 active_drivers = []
-version = 130
+version = 132
 
 for i in range(NUM_DRIVERS):
     active_drivers.append(uc.Chrome(version_main=version))
@@ -114,6 +110,7 @@ def login():
 def create(q=None):
     for driver in active_drivers:
         driver.get('http://suno.com/create')
+        random_sleep(4,6)
 
         if q==None:
             # SINGLE CASE
@@ -122,33 +119,20 @@ def create(q=None):
             # BULK CASE
             QUERY = q
 
-        query_field = driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]/div[2]/div/div/textarea')
+        query_field = driver.find_element(By.XPATH, "//textarea[contains(@class, 'custom-textarea')]")
         query_field.send_keys(QUERY)
 
         random_sleep(3,6)
 
-        create_btn = driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[2]/div[2]/div/div[1]/div[1]/div/div[1]/div/div[3]/div[3]/button')
+        create_btn = driver.find_element(By.XPATH, "//button[@aria-label='Create']")
+
         create_btn.click()
 
     # Suno creation takes between 2 and 3 mins (give 3 mins for creation)
-    spinner_thread = start_loading("CREATION (will take up to 180 seconds)")
-    random_sleep(160,170)
+    spinner_thread = start_loading("CREATION (will take up to 200 seconds)") # Suno v4 is SLOWER!
+    random_sleep(190,200)
     stop_loading(spinner_thread, "CREATION FINISHED")
 
-# Helper function for download (cleaning the text)
-def cleanText(full_text):
-    # Define markers
-    start_marker = "[Verse]"
-    end_marker = "Edit Displayed Lyrics"
-
-    # Extract lyrics between the markers
-    if start_marker in full_text and end_marker in full_text:
-        start_index = full_text.find(start_marker)
-        end_index = full_text.find(end_marker)
-        lyrics_text = full_text[start_index:end_index].strip()
-    else:
-        lyrics_text = "Lyrics not found or improperly formatted."
-    return lyrics_text
 
 def download():
     spinner_thread = start_loading("DOWNLOAD")
@@ -159,26 +143,38 @@ def download():
 
         account = Protection.sterne_names[i].split('@')[0]
 
-        # Find all song elements on the page
-        song_elements = driver.find_elements(By.CSS_SELECTOR, 'div.w-full.flex.items-center.gap-1 a[href^="/song/"]')
+        # Find all song elements on the page based on the new structure
+        song_elements = driver.find_elements(By.XPATH, "//div[contains(@class, 'react-aria-GridListItem') and @tabindex='-1']")
+
+        #print("SONG ELEMENTS LENGTH IS:", len(song_elements)) -> for debugging
+
+        # Base URL for Suno songs
+        BASE_URL = "https://suno.com/song/"
+
         song_titles = []
+        song_hrefs = []
 
-        for el in song_elements:
+        for song in song_elements:
             try:
-                # Navigate to the parent span of the a tag
-                parent_span = el.find_element(By.XPATH, '..')
+                # Extract song title from the span with the title attribute
+                title_span = song.find_element(By.XPATH, './/span[@title]')
+                song_title = title_span.get_attribute("title")
 
-                # Extract the title attribute from the parent span, which contains the song title
-                song_title = parent_span.get_attribute("title")
-                
-                # Clean up the song title for use in filenames (optional)
-                song_title_clean = re.sub(r'[\\/*?:"<>|]', "", song_title)  # Remove invalid filename characters
+                # Clean up song title for filenames
+                song_title_clean = re.sub(r'[\\/*?:"<>|]', "", song_title)
+
+                # Extract song ID directly from the data-key attribute
+                song_id = song.get_attribute('data-key')
+                full_link = BASE_URL + song_id  # Construct full song URL
 
                 song_titles.append(song_title_clean)
-            except:
+                song_hrefs.append(full_link)
+            except Exception as e:
+                print(f"Error processing song: {e}")
                 continue
 
-        song_hrefs = [element.get_attribute('href') for element in song_elements]
+        print("Songs Found:", song_titles)
+        print("Song URLs:", song_hrefs)
 
         NUM_SONGS = 2 # since 2 songs are created for each creation
 
@@ -211,7 +207,7 @@ def download():
                 if audio_url:
                     # Download the audio file using requests
                     response = requests.get(audio_url)
-                    file_name = f"{song_titles[i]}_v{i+1}_{account}.mp3"
+                    file_name = f"songs/suno/{song_titles[i]}_v{i+1}_{account}.mp3"
                     
                     # Save the audio file
                     with open(file_name, "wb") as file:
@@ -226,17 +222,15 @@ def download():
             
             try:
                 # Locate the textarea and extract the text
-                textarea = driver.find_element(By.CLASS_NAME, 'relative.overflow-y-hidden')
+                textarea = driver.find_element(By.XPATH, "//textarea[contains(@class, 'whitespace-pre-wrap')]")
                 text_content = textarea.get_attribute('value')
 
                 # If text is inside the tag's inner content instead of 'value'
                 if not text_content:
                     text_content = textarea.text
 
-                text_content = cleanText(text_content)
-
                 # Save the text to a .txt file
-                file_path = f"{song_titles[i]}_v{i+1}_{account}.txt"
+                file_path = f"songs/suno/{song_titles[i]}_v{i+1}_{account}.txt"
                 with open(file_path, 'w', encoding='utf-8') as file:
                     file.write(text_content)
 
@@ -269,9 +263,13 @@ def main():
             d.close()
         return
 
-    batch = {'yoga': "Compose a track for a yoga session. The music should align with the calming and focused nature of the activity.",
-        'weightlifting': "Compose a track for a weightlifting session. The music should match the intense and dynamic energy of the workout."
-        }
+    batch = {
+        #"pride_month": "Compose a 30-second track celebrating Pride Month. The music should be vibrant, uplifting, and embody themes of love, unity, and LGBTQ+ pride.",
+        "black_history_month": "Compose a 30-second track celebrating Black History Month. The music should reflect pride, resilience, and cultural heritage.",
+        "corporate_meeting": "Compose a 30-second track for a corporate meeting intro. The music should be sleek, motivational, and professional.",
+        "indigenous_ceremony": "Compose a 30-second track for an Indigenous ceremony. The music should respect traditional rhythms and cultural significance.",
+        "caribbean_carnival": "Compose a 30-second track for a Caribbean carnival. The music should be vibrant, percussive, and infused with Soca and Dancehall rhythms."
+    }
 
     if input("Do you want a batch query? (y/n): ") == "y":
         print("Okay, here is your batch list: ")
@@ -282,6 +280,8 @@ def main():
     while input("Do you want another song? (y/n): ") != "n":
         create()
         download()
+    
+
 
 
     print("ENDING SESSION")

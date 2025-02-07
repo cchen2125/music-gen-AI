@@ -5,4 +5,5 @@
 
 `sunoWorkflow.py`: Code for querying and downloading songs from Suno
 - store Sterne emails/passwords in a .txt file called accounts.txt, where each line is a email, followed by a comma and then the password (no spaces)
-- So far microsoft accounts have only been made for Robert and John. As time goes on and we make more, we increase NUM_DRIVERS to len(sterne_names)
+- For now, keep num_drivers<5 to avoid crashing. To use other accounts, just reorder your accounts.txt file
+- Be careful for some microsoft login errors (sometimes asks to login via code instead of password - must manually bypass)

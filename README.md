@@ -9,3 +9,7 @@
 - Be careful for some microsoft login errors (sometimes asks to login via code instead of password - must manually bypass)
 
 `stableAudioWorkflow.py`: Code for querying and downloading songs from Stable Audio
+
+`mubertWorkflow.py`: Code for querying and downloading songs from Mubert
+- Need to create more facebook accounts to run multi-account workflows
+- Login is (relatively) slow on purpose just to bypass facebook bot detection

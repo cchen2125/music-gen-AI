@@ -16,7 +16,7 @@ import time
 NUM_DRIVERS = 3
 
 active_drivers = []
-version = 132
+#version = 132
 
 for i in range(NUM_DRIVERS):
     account = Protection.sterne_names[i].split('@')[0]
@@ -25,7 +25,8 @@ for i in range(NUM_DRIVERS):
     prefs = {"download.default_directory" : f"/Users/clarachen/Documents/Harvard/Radcliffe Research Partners/music-gen-AI/stable_audio/{account}"}
     chromeOptions.add_experimental_option("prefs",prefs)
 
-    active_drivers.append(uc.Chrome(version_main=version, options=chromeOptions))
+    active_drivers.append(uc.Chrome(options=chromeOptions))
+    #active_drivers.append(uc.Chrome(version_main=version, options=chromeOptions))
 
 
 # Global event to control the spinner

@@ -13,3 +13,15 @@
 `mubertWorkflow.py`: Code for querying and downloading songs from Mubert
 - Need to create more facebook accounts to run multi-account workflows
 - Login is (relatively) slow on purpose just to bypass facebook bot detection
+
+## Installation
+
+Requirements:
+- `ffmpeg`
+- `python3`
+
+```bash
+cd music-gen-AI
+python3 -m venv ./
+./bin/pip install -r requirements.txt
+```

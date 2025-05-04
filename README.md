@@ -17,8 +17,9 @@
 ## Installation
 
 Requirements:
-- `ffmpeg`
-- `python3`
+- Chrome (or Chromium) version 136
+- ffmpeg
+- python3
 
 ```bash
 cd music-gen-AI

@@ -69,7 +69,7 @@ def login():
     for i, driver in enumerate(active_drivers):
         # Protected module for email and password
         EMAIL = Protection.sterne_names[i]
-        PASSWORD = Protection.sterne_pwords[i].capitalize()
+        PASSWORD = Protection.sterne_pwords[i] #.capitalize()
 
         driver.get('https://www.stableaudio.com/')
 

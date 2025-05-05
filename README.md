@@ -14,15 +14,31 @@
 - Need to create more facebook accounts to run multi-account workflows
 - Login is (relatively) slow on purpose just to bypass facebook bot detection
 
-## Installation
+## Getting started
 
-Requirements:
-- Chrome (or Chromium) version 136
-- ffmpeg
-- python3
+### Requirements
+
+- Chrome (or [Chromium](https://www.chromium.org/Home/)) version 136 or higher
+- [ffmpeg](https://ffmpeg.org/download.html)
+- [Python](https://www.python.org/) version 3.12 or higher
+- Python [venv](https://docs.python.org/3/library/venv.html) library
+
+### Installing
 
 ```bash
 cd music-gen-AI
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+```
+
+### Setup
+
+- Create new file `accounts.txt`
+- Add music generation platform credentials to `accounts.txt` with format: `userID,password` (one ID/password pair per line)
+- (Add at least 3 active credential sets to `accounts.txt`, or edit script files to change `NUM_DRIVERS = 3`)
+
+### Running (StableAudio example)
+
+```bash
+.venv/bin/python3 stableAudioWorkflow.py 
 ```
